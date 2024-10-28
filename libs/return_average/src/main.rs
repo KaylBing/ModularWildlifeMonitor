@@ -20,14 +20,17 @@ fn image_sum(){
     let (width, height) = img.dimensions();
     println!("Image dimensions: {}x{}", width, height); // Temp
 
+    let mut full_sum: u32 = 0;
+
     // Iterate over pixels //
     for y in 0..height {
         for x in 0..width {
             // Get the pixel at (x, y)
             let pixel = img.get_pixel(x, y);
             let rgb = pixel.to_rgb();
-            let (r, g, b) = (rgb[0], rgb[1], rgb[2]);
-            println!("Pixel at ({}, {}): R = {}, G = {}, B = {}", x, y, r, g, b);
+            let (r, g, b) = (rgb[0] as u32, rgb[1] as u32, rgb[2] as u32);
+            full_sum += r + g + b;
+            println!("{}", full_sum); // Change to return eventually //
         }
     }
 }
