@@ -18,7 +18,7 @@ fn image_sum(){
 
     // Get edgd dimensions //
     let (width, height) = img.dimensions();
-    println!("Image dimensions: {}x{}", width, height); // Temp
+    // println!("Image dimensions: {}x{}", width, height);
 
     let mut full_sum: u32 = 0;
 
