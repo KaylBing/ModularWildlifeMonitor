@@ -28,11 +28,11 @@ fn image_sum(){
             // Get the pixel at (x, y)
             let pixel = img.get_pixel(x, y);
             let rgb = pixel.to_rgb();
-            let (r, g, b) = (rgb[0] as u32, rgb[1] as u32, rgb[2] as u32);
+            let (r, g, b) = (rgb[0] as u32, rgb[1] as u32, rgb[2] as u32); // Load u8s as u32s //
             full_sum += r + g + b;
-            println!("{}", full_sum); // Change to return eventually //
         }
     }
+    println!("{}", full_sum);
 }
 
 fn main(){
