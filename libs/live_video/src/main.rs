@@ -8,7 +8,7 @@ use opencv::{
 };
 
 fn main() -> Result<()> {
-    let video_path = "/home/mikhailu/Pictures/test_vid.webm";
+    let video_path = "/home/mikhailu/MWM/ModularWildlifeMonitor/test_footage_1280_720_30fps.mp4";
 
     // Open the video file as mutable //
     let mut video = VideoCapture::from_file(video_path, CAP_ANY)?;
