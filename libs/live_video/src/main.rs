@@ -10,7 +10,7 @@ use opencv::{
 fn main() -> Result<()> {
     let video_path = "/home/mikhailu/MWM/ModularWildlifeMonitor/test_footage_1280_720_30fps.mp4";
 
-    // Open the video file as mutable //
+    // Open the video file as mutable if possible //
     let mut video = VideoCapture::from_file(video_path, CAP_ANY)?;
     if !video.is_opened()? {
         panic!("Unable to open video file!");
@@ -20,7 +20,7 @@ fn main() -> Result<()> {
     let mut current_frame = Mat::default();
     let mut diff_frame = Mat::default();
 
-    // Infinite loop to read and process frames //
+    // Infinite loop to read and process frames as long as they exist //
     loop {
         // Capture the next frame //
         video.read(&mut current_frame)?;
@@ -30,11 +30,11 @@ fn main() -> Result<()> {
             break;
         }
 
-        // Convert to grayscale //
+        // Convert to grayscale, may not be needed but we will see if it helps //
         let mut gray_frame = Mat::default();
         imgproc::cvt_color(&current_frame, &mut gray_frame, COLOR_BGR2GRAY, 0)?;
 
-        // Apply Gaussian blur using a temporary Matrix //
+        // Apply Gaussian blur using a temporary Matrix, supposed to also help with "shakey footage  //
         let mut blurred_frame = Mat::default();
         imgproc::gaussian_blur(&gray_frame, &mut blurred_frame, Size::new(21, 21), 0.0, 0.0, BORDER_DEFAULT)?;
 
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
             let mut threshold_frame = Mat::default();
             imgproc::threshold(&diff_frame, &mut threshold_frame, 25.0, 255.0, THRESH_BINARY | THRESH_OTSU)?;
 
-            // Find contours and draw regions //
+            // Find contours and draw regions WORK IN PROGRESS, NEEDS TUNING //
             let mut contours = opencv::core::Vector::<opencv::core::Vector<opencv::core::Point>>::new();
             imgproc::find_contours(
                 &threshold_frame,
