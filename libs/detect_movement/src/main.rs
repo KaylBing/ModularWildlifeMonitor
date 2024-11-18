@@ -1,5 +1,5 @@
 use opencv::{
-    core::{absdiff, Mat, Scalar, Size, BORDER_DEFAULT},
+    core::{absdiff, Mat, Size, BORDER_DEFAULT},
     imgproc::{self, COLOR_BGR2GRAY, THRESH_BINARY},
     prelude::*,
     videoio::{VideoCapture, VideoWriter, CAP_ANY},
@@ -10,7 +10,7 @@ use std::fs;
 use std::path::Path;
 
 fn main() -> Result<()> {
-    let video_path = "/home/mikhailu/MWM/ModularWildlifeMonitor/test_footage_1280_720_30fps.mp4";
+    let camera_index = 0; // Index of the camera to use
     let output_dir = "/home/mikhailu/MWM/ModularWildlifeMonitor/Flagged_Footage";
 
     // Create output directory if it doesn't exist
@@ -18,10 +18,10 @@ fn main() -> Result<()> {
         fs::create_dir(output_dir).map_err(|e| opencv::Error::new(opencv::core::StsError, format!("IO Error: {}", e)))?;
     }
 
-    // Open the video file
-    let mut video = VideoCapture::from_file(video_path, CAP_ANY)?;
+    // Open the camera
+    let mut video = VideoCapture::new(camera_index, CAP_ANY)?;
     if !video.is_opened()? {
-        panic!("Unable to open video file!");
+        panic!("Unable to open camera!");
     }
 
     let mut prev_frame = Mat::default();
@@ -35,7 +35,8 @@ fn main() -> Result<()> {
     let mut segment_count = 0;
     let mut no_motion_frames = 0; // Counter to track how long there is no motion
 
-    let fps = video.get(opencv::videoio::CAP_PROP_FPS)?; // Get FPS of the video
+    // Get FPS of the camera or set a default
+    let fps = video.get(opencv::videoio::CAP_PROP_FPS)?.max(30.0); // Default to 30 FPS if not available
     let width = video.get(opencv::videoio::CAP_PROP_FRAME_WIDTH)? as i32;
     let height = video.get(opencv::videoio::CAP_PROP_FRAME_HEIGHT)? as i32;
     let codec = VideoWriter::fourcc('M', 'J', 'P', 'G')?; // Codec for AVI files
@@ -44,7 +45,8 @@ fn main() -> Result<()> {
     loop {
         video.read(&mut current_frame)?;
         if current_frame.empty() {
-            break; // End of video
+            println!("No frame captured, camera might have disconnected.");
+            break; // End if the camera feed is unavailable
         }
 
         frame_count += 1;
@@ -118,6 +120,15 @@ fn main() -> Result<()> {
 
         // Update previous frame
         gray_frame.copy_to(&mut prev_frame)?;
+
+        // Display the live feed (optional)
+        highgui::imshow("Live Camera Motion Detection", &current_frame)?;
+
+        // Stop the loop if 'q' is pressed
+        let key = highgui::wait_key(1)?; // Wait for 1 ms
+        if key == 113 { // ASCII value of 'q'
+            break;
+        }
     }
 
     Ok(())
