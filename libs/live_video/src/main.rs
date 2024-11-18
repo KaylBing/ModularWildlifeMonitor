@@ -1,6 +1,6 @@
 use opencv::{
-    core::{absdiff, Mat, Scalar, Size, BORDER_DEFAULT},
-    imgproc::{self, COLOR_BGR2GRAY, THRESH_BINARY, THRESH_OTSU},
+    core::{absdiff, add_weighted, Mat, Scalar, Size, BORDER_DEFAULT},
+    imgproc::{self, COLOR_BGR2GRAY, THRESH_BINARY},
     prelude::*,
     videoio::{VideoCapture, CAP_ANY},
     highgui,
@@ -19,6 +19,7 @@ fn main() -> Result<()> {
     let mut prev_frame = Mat::default();
     let mut current_frame = Mat::default();
     let mut diff_frame = Mat::default();
+    let mut frame_count = 0;
 
     // Infinite loop to read and process frames as long as they exist //
     loop {
@@ -30,13 +31,20 @@ fn main() -> Result<()> {
             break;
         }
 
-        // Convert to grayscale, may not be needed but we will see if it helps //
+        // Skip every other frame (processes 15 fps if video is 30 fps) //
+        if frame_count % 2 != 0 {
+            frame_count += 1;
+            continue;
+        }
+        frame_count += 1;
+
+        // Convert to grayscale //
         let mut gray_frame = Mat::default();
         imgproc::cvt_color(&current_frame, &mut gray_frame, COLOR_BGR2GRAY, 0)?;
 
-        // Apply Gaussian blur using a temporary Matrix, supposed to also help with "shakey footage  //
+        // Apply Gaussian blur with a smaller kernel //
         let mut blurred_frame = Mat::default();
-        imgproc::gaussian_blur(&gray_frame, &mut blurred_frame, Size::new(21, 21), 0.0, 0.0, BORDER_DEFAULT)?;
+        imgproc::gaussian_blur(&gray_frame, &mut blurred_frame, Size::new(5, 5), 0.0, 0.0, BORDER_DEFAULT)?;
 
         // Replace gray_frame with blurred_frame //
         blurred_frame.copy_to(&mut gray_frame)?;
@@ -45,11 +53,15 @@ fn main() -> Result<()> {
             // Calculate the difference between the current and previous frame //
             absdiff(&prev_frame, &gray_frame, &mut diff_frame)?;
 
-            // Apply threshold (need to find a good value still) //
+            // Apply threshold with a lower sensitivity value //
             let mut threshold_frame = Mat::default();
-            imgproc::threshold(&diff_frame, &mut threshold_frame, 25.0, 255.0, THRESH_BINARY | THRESH_OTSU)?;
+            imgproc::threshold(&diff_frame, &mut threshold_frame, 15.0, 255.0, THRESH_BINARY)?;
 
-            // Find contours and draw regions WORK IN PROGRESS, NEEDS TUNING //
+            // Debugging: Show intermediate frames //
+            highgui::imshow("Difference Frame", &diff_frame)?;
+            highgui::imshow("Threshold Frame", &threshold_frame)?;
+
+            // Find contours and draw regions //
             let mut contours = opencv::core::Vector::<opencv::core::Vector<opencv::core::Point>>::new();
             imgproc::find_contours(
                 &threshold_frame,
@@ -61,7 +73,7 @@ fn main() -> Result<()> {
 
             // Draw contours to highlight detected motion //
             for contour in contours.iter() {
-                if imgproc::contour_area(&contour, false)? > 500.0 {
+                if imgproc::contour_area(&contour, false)? > 200.0 {
                     imgproc::draw_contours(
                         &mut current_frame,
                         &contours,
