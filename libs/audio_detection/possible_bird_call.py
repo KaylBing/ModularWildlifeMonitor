@@ -77,8 +77,6 @@ def save_snippet(snippet):
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
         #print(f"Created directory: {save_directory}")
-    else:
-        #print(f"Directory exists: {save_directory}")
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filename = f"possible_bird_call_{timestamp}.wav"
