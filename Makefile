@@ -9,7 +9,7 @@ PYTHON = python3
 check_deps:
 	@if ! command -v $(CARGO) &>/dev/null; then \
 		echo "cargo not found. Installing Rust..."; \
-		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s --; \
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
 		echo "Rust installed."; \
 	fi
 	@if ! command -v $(JQ) &>/dev/null; then \
@@ -21,6 +21,11 @@ check_deps:
 		echo "python3 not found. Installing Python..."; \
 		sudo apt-get install -y python3 python3-pip; \
 		echo "Python installed."; \
+	fi
+	@if ! command -v llvm-config &>/dev/null; then \
+		echo "llvm-config not found. Installing LLVM development tools..."; \
+		sudo apt-get install -y llvm-dev libclang-dev clang; \
+		echo "LLVM tools installed."; \
 	fi
 
 # Check Python dependencies
@@ -80,43 +85,12 @@ install_java:
 # Add program to system startup using systemd
 add_to_startup:
 	@if [ "$(PROGRAM_NAME)" ]; then \
-		echo "Do you want to add '$(PROGRAM_NAME)' to startup? (y/n)"; \
-		read -r add_startup; \
-		if [[ "$$add_startup" =~ ^[Yy]$$ ]]; then \
-			SERVICE_FILE=$(SYSTEMD_DIR)/$(PROGRAM_NAME).service; \
-			echo "Creating systemd service for $(PROGRAM_NAME)..."; \
-			sudo bash -c "cat > $$SERVICE_FILE" <<EOF \
-[Unit] \
-Description=$(PROGRAM_NAME) Service \
-After=network.target \
-\
-[Service] \
-ExecStart=$(INSTALL_DIR)/$(PROGRAM_NAME) \
-Restart=always \
-User=nobody \
-Group=nogroup \
-WorkingDirectory=$(INSTALL_DIR) \
-\
-[Install] \
-WantedBy=multi-user.target \
-EOF \
-			sudo systemctl daemon-reload; \
-			sudo systemctl enable $(PROGRAM_NAME).service; \
-			echo "'$(PROGRAM_NAME)' has been added to startup!"; \
-		else \
-			echo "Skipping startup configuration for $(PROGRAM_NAME)."; \
-		fi; \
-	fi
-
-# Add program to system startup using systemd
-add_to_startup:
-	@if [ "$(PROGRAM_NAME)" ]; then \
-		echo "Do you want to add '$(PROGRAM_NAME)' to startup? (y/n)"; \
-		read -r add_startup; \
+		printf "Do you want to add '$(PROGRAM_NAME)' to startup? (y/n): "; \
+		read add_startup; \
 		if [ "$$add_startup" = "y" ] || [ "$$add_startup" = "Y" ]; then \
 			SERVICE_FILE=$(SYSTEMD_DIR)/$(PROGRAM_NAME).service; \
 			echo "Creating systemd service for $(PROGRAM_NAME)..."; \
-			sudo bash -c "cat > $$SERVICE_FILE" <<EOF \
+			sudo bash -c "cat > $$SERVICE_FILE" <<EOF; \
 [Unit] \
 Description=$(PROGRAM_NAME) Service \
 After=network.target \
@@ -153,7 +127,6 @@ uninstall:
 	@echo "Uninstallation complete!"
 
 # Main targets
-
 install: check_deps check_python_deps build_rust install_rust install_java
 	@echo "Installation complete!"
 	@make add_to_startup
