@@ -76,7 +76,9 @@ def save_snippet(snippet):
     save_directory = r"ModularWildlifeMonitor\libs\audio_detection\calls"
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
-        #print(f"Created directory: {save_directory}")
+        print(f"Created directory: {save_directory}")
+    else:
+        print("directory exists")
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filename = f"possible_bird_call_{timestamp}.wav"
@@ -87,9 +89,9 @@ def save_snippet(snippet):
             wf.setsampwidth(2)  # 2 bytes for 16-bit audio
             wf.setframerate(RATE)
             wf.writeframes(b''.join(snippet))
-        #print(f"Saved bird call to {filepath}")
+        print(f"Saved bird call to {filepath}")
     except Exception as e:
-        #print(f"Error saving snippet: {e}")
+        print(f"Error saving snippet: {e}")
 
 p = pyaudio.PyAudio()
 
@@ -98,7 +100,7 @@ stream = p.open(format=FORMAT, channels=CHANNELS,
                 rate=RATE, input=True,
                 frames_per_buffer=CHUNK)
 
-#print("Recording...")
+print("Recording...")
 
 try:
     while True:
@@ -115,11 +117,11 @@ try:
             last_bird_call_time = time.time()
             is_recording = True
             rolling_buffer.append(data)
-            #print("Recording bird call...")
+            print("Recording bird call...")
 
         elif is_recording:
             rolling_buffer.append(data)
-            #print("appending data to rolling buffer...")
+            print("appending data to rolling buffer...")
             if time.time() - last_bird_call_time > MAX_SILENCE:
                 print("Max silence reached. Stopping recording...")
                 save_snippet(rolling_buffer)
@@ -127,7 +129,7 @@ try:
                 is_recording = False
 
         if is_recording and rolling_buffer:
-          #print("saving final snippet...")
+          print("saving final snippet...")
             save_snippet(rolling_buffer)
 
 except KeyboardInterrupt:
