@@ -11,7 +11,7 @@ use std::path::Path;
 
 fn main() -> Result<()> {
     let camera_index = 0; // Index of the camera to use
-    let output_dir = "/home/mikhailu/MWM/ModularWildlifeMonitor/Flagged_Footage";
+    let output_dir = "Flagged_Footage";
 
     // Create output directory if it doesn't exist
     if !Path::new(output_dir).exists() {
