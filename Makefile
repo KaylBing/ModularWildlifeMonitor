@@ -108,20 +108,21 @@ EOF \
 		fi; \
 	fi
 
-# Prompt user to add run_on_start.sh to system startup
-add_run_on_start:
-	@echo "Do you want to add 'run_on_start.sh' to system startup? (y/n)"; \
-	read -r add_startup; \
-	if [[ "$$add_startup" =~ ^[Yy]$$ ]]; then \
-		SERVICE_FILE=$(SYSTEMD_DIR)/run_on_start.service; \
-		echo "Creating systemd service for run_on_start.sh..."; \
-		sudo bash -c "cat > $$SERVICE_FILE" <<EOF \
+# Add program to system startup using systemd
+add_to_startup:
+	@if [ "$(PROGRAM_NAME)" ]; then \
+		echo "Do you want to add '$(PROGRAM_NAME)' to startup? (y/n)"; \
+		read -r add_startup; \
+		if [ "$$add_startup" = "y" ] || [ "$$add_startup" = "Y" ]; then \
+			SERVICE_FILE=$(SYSTEMD_DIR)/$(PROGRAM_NAME).service; \
+			echo "Creating systemd service for $(PROGRAM_NAME)..."; \
+			sudo bash -c "cat > $$SERVICE_FILE" <<EOF \
 [Unit] \
-Description=Run On Start Script \
+Description=$(PROGRAM_NAME) Service \
 After=network.target \
 \
 [Service] \
-ExecStart=$(INSTALL_DIR)/run_on_start.sh \
+ExecStart=$(INSTALL_DIR)/$(PROGRAM_NAME) \
 Restart=always \
 User=nobody \
 Group=nogroup \
@@ -130,11 +131,12 @@ WorkingDirectory=$(INSTALL_DIR) \
 [Install] \
 WantedBy=multi-user.target \
 EOF \
-		sudo systemctl daemon-reload; \
-		sudo systemctl enable run_on_start.service; \
-		echo "'run_on_start.sh' has been added to startup!"; \
-	else \
-		echo "Skipping startup configuration for run_on_start.sh."; \
+			sudo systemctl daemon-reload; \
+			sudo systemctl enable $(PROGRAM_NAME).service; \
+			echo "'$(PROGRAM_NAME)' has been added to startup!"; \
+		else \
+			echo "Skipping startup configuration for $(PROGRAM_NAME)."; \
+		fi; \
 	fi
 
 # Uninstall all binaries and remove from startup
@@ -154,4 +156,4 @@ uninstall:
 
 install: check_deps check_python_deps build_rust install_rust install_java
 	@echo "Installation complete!"
-	@make add_run_on_start
+	@make add_to_startup
