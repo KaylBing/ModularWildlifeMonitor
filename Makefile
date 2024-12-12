@@ -3,6 +3,7 @@ INSTALL_DIR = /usr/local/bin
 SYSTEMD_DIR = /etc/systemd/system
 CARGO = $(HOME)/.cargo/bin/cargo
 JQ = jq
+PYTHON = python3
 
 # Check if the required tools are available
 check_deps:
@@ -16,6 +17,22 @@ check_deps:
 		sudo apt-get install -y jq; \
 		echo "jq installed."; \
 	fi
+	@if ! command -v $(PYTHON) &>/dev/null; then \
+		echo "python3 not found. Installing Python..."; \
+		sudo apt-get install -y python3 python3-pip; \
+		echo "Python installed."; \
+	fi
+
+# Check Python dependencies
+check_python_deps:
+	@for dir in libs/*/; do \
+		if [ -d "$$dir" ] && [ -f "$$dir/requirements.txt" ]; then \
+			echo "Installing Python dependencies for $$dir..."; \
+			pip3 install -r $$dir/requirements.txt; \
+		else \
+			echo "No requirements.txt found in $$dir. Skipping Python dependencies check."; \
+		fi; \
+	done
 
 # Build Rust project (in each lib directory)
 build_rust:
@@ -106,6 +123,5 @@ uninstall:
 
 # Main targets
 
-install: check_deps build_rust install_rust install_java
+install: check_deps check_python_deps build_rust install_rust install_java
 	@echo "Installation complete!"
-
