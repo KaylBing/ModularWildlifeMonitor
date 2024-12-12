@@ -1,0 +1,5 @@
+# Configuration for live services
+live_camera: false  # Set to true to enable live camera
+live_audio: false   # Set to true to enable live audio
+additional_program: false  # Set to true to enable the additional program
+
