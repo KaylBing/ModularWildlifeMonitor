@@ -6,23 +6,23 @@ import datetime
 import os
 from scipy.signal import butter, lfilter
 
-# constants
-CHUNK = 1024               # buffer size
+
+CHUNK = 1024               # Buffer size
 FORMAT = pyaudio.paInt16   # 16-bit audio
-CHANNELS = 1               # mono audio
-RATE = 44100               # sampling rate
-MIN_FREQUENCY = 1000.0     # bird call frequency range (Hz)
+CHANNELS = 1               # Mono audio
+RATE = 44100               # Sampling rate
+MIN_FREQUENCY = 1000.0     # Bird call frequency range (Hz)
 MAX_FREQUENCY = 10000.0
 AMPLITUDE_THRESHOLD = 1000  # RMS amplitude threshold
-MAX_SILENCE = 30           # max silence duration (seconds)
+MAX_SILENCE = 30           # Max silence duration (seconds)
 SILENCE_RMS_THRESHOLD = 0.01  # RMS threshold for detecting silence
 
-# variables
+
 last_bird_call_time = time.time()
 is_recording = False
 rolling_buffer = []
 
-# helper functions
+
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
     nyquist = 0.5 * fs
     low = lowcut / nyquist
@@ -36,7 +36,7 @@ def calculate_rms(data):
         return 0.0
 
     samples = np.frombuffer(data, dtype=np.int16).astype(np.float32)
-    samples = np.nan_to_num(samples)  # Replace NaN/Inf with zero
+    samples = np.nan_to_num(samples)  
 
     if len(samples) == 0:
         return 0.0
@@ -54,10 +54,9 @@ def calculate_dominant_frequency(data):
     if len(samples) == 0:
         return None
 
-    # band-pass filter
     filtered_samples = bandpass_filter(samples, MIN_FREQUENCY, MAX_FREQUENCY, RATE)
 
-    # FFT
+    
     fft_result = np.fft.rfft(filtered_samples)
     freqs = np.fft.rfftfreq(len(filtered_samples), 1.0 / RATE)
     magnitudes = np.abs(fft_result)
@@ -69,16 +68,16 @@ def calculate_dominant_frequency(data):
 
     if MIN_FREQUENCY <= dominant_freq <= MAX_FREQUENCY:
         return dominant_freq
-          else:
+    else:
         return None
 
 def save_snippet(snippet):
-    save_directory = r"ModularWildlifeMonitor\libs\audio_detection\calls"
+    save_directory = r"C:\Users\angel\Sandbox\calls"  # Correct directory path
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
         print(f"Created directory: {save_directory}")
     else:
-        print("directory exists")
+        print("Directory exists")
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filename = f"possible_bird_call_{timestamp}.wav"
@@ -95,7 +94,7 @@ def save_snippet(snippet):
 
 p = pyaudio.PyAudio()
 
-# stream for audio input
+
 stream = p.open(format=FORMAT, channels=CHANNELS,
                 rate=RATE, input=True,
                 frames_per_buffer=CHUNK)
@@ -121,16 +120,12 @@ try:
 
         elif is_recording:
             rolling_buffer.append(data)
-            print("appending data to rolling buffer...")
+            print("Appending data to rolling buffer...")
             if time.time() - last_bird_call_time > MAX_SILENCE:
                 print("Max silence reached. Stopping recording...")
                 save_snippet(rolling_buffer)
                 rolling_buffer = []
                 is_recording = False
-
-        if is_recording and rolling_buffer:
-          print("saving final snippet...")
-            save_snippet(rolling_buffer)
 
 except KeyboardInterrupt:
     print("Recording stopped by user")
@@ -140,4 +135,5 @@ finally:
     p.terminate()
   
     if is_recording and rolling_buffer:
-          save_snippet(rolling_buffer)
+        print("Saving final snippet...")
+        save_snippet(rolling_buffer)
